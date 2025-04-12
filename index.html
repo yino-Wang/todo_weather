@@ -49,6 +49,64 @@
         const input = document.getElementById("input");
         const addBtn = document.getElementById("addbtn");
         const todo = document.getElementById("todo");
+
+        //get tasks array in localStorage 
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        //渲染任务列表
+        function renderTasks(){
+            todo.innerHTML = "";
+            tasks.forEach((task,index) => {
+                const list = document.createElement("li");
+                const taskContext = document.createElement("span");
+                taskContext.textContent = task;
+                //let button stay right...
+                const btnGroup = document.createElement("div");
+                btnGroup.classList.add("btngroup");
+                 //edit a list
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Edit";
+                editBtn.classList.add("edit"); //add class name 
+
+                editBtn.addEventListener("click", function(){
+                    const newText = prompt("Edit your task:", list.firstChild.textContent);
+                    if(newText === ""){
+                        alert("Please enter your new task...");
+                    }else if(newText !== null && newText.trim() !== ""){ //trim -> remove space
+                        tasks[index] = newText.trim();
+                        saveTasks();
+                        renderTasks();
+                    }
+                });
+
+                //delete a list
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.classList.add("delete"); //add class name 
+
+                deleteBtn.addEventListener("click", function(){
+                    tasks.splice(index,1);
+                    saveTasks();
+                    renderTasks();
+                });               
+
+                //组装按钮组
+                btnGroup.appendChild(deleteBtn);
+                btnGroup.appendChild(editBtn);
+
+                //add to list
+                list.appendChild(taskContext);
+                list.appendChild(btnGroup);
+
+                todo.appendChild(list);
+            });
+        }
+
+        function saveTasks(){
+            localStorage.setItem("tasks", JSON.stringify(tasks)); //parse to string type
+        }
+
+        //add todo
         addBtn.addEventListener("click", function(){
             const task = input.value.trim();
             if(task === ""){
@@ -56,49 +114,14 @@
                 return;
             }
 
-            const list = document.createElement("li");
-            const taskContext = document.createElement("span");
-            taskContext.textContent = task;
+            tasks.push(task);
+            saveTasks();
+            renderTasks();
 
-            //let button stay right...
-            const btnGroup = document.createElement("div");
-            btnGroup.classList.add("btngroup");
-            //edit a list
-            const editBtn = document.createElement("button");
-            editBtn.textContent = "Edit";
-            editBtn.classList.add("edit"); //add class name 
-
-            editBtn.addEventListener("click", function(){
-                const newText = prompt("Edit your task:", list.firstChild.textContent);
-                if(newText === ""){
-                    alert("Please enter your new task...");
-                }else if(newText !== null && newText.trim() !== ""){ //trim -> remove space
-                    list.firstChild.textContent = newText.trim();
-                }
-            });
-
-            //delete a list
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.classList.add("delete"); //add class name 
-
-            deleteBtn.addEventListener("click", function(){
-                list.remove();
-            });
-
-            //组装按钮组
-            btnGroup.appendChild(deleteBtn);
-            btnGroup.appendChild(editBtn);
-
-            //add to list
-            list.appendChild(taskContext);
-            list.appendChild(btnGroup);
-
-            todo.appendChild(list);
-
-        input.value = "";
+            input.value = "";
         });
-
+        //初始化渲染
+        renderTasks();
     </script>
     
 </body>
