@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>To do list</title>
-    <meta http-equiv="refresh" content="30">
+    <title>To do list and Weather API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
@@ -27,12 +26,21 @@
                 margin-left: 5px;
                 cursor: pointer;
             }
+            #song, #quotes, #currentTime{
+                margin: 20px 0;
+                padding: 15px;
+                background-color: #fff3e0;
+                border-left: 4px solid orange;
+                border-radius: 5px;
+            }
         li{
-            border-color:black;
-            border-style: dashed;
-            padding: 10px;
-            background-color: antiquewhite;
-            margin: 10px;
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 8px solid teal;
+            position: relative;
+            border-radius: 9px;
+            box-shadow: 0 0 5px;
             display: flex;
             justify-content: space-between; /*两端对齐*/
             align-items: center;
@@ -56,6 +64,15 @@
             padding: 5px 8px;
             cursor: pointer;
         }
+
+        .time {
+            font-size: 0.65em;
+            color: #5d5b5b;
+            font-style: italic;
+            margin-top: 5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         .toggle {
             background-color: green;
             color: white;
@@ -67,19 +84,61 @@
             text-decoration: line-through;
             color: #999;
         }
+
+        .dark-mode{
+            background-color: rgb(41, 38, 38);
+        }
+        .dark-mode h1,  .dark-mode .time{
+            color: #f7f7f7;
+        }
+        .dark-mode #addbtn, .dark-mode #toggle-theme{ /*#id or .classname*/
+            color: #f7f7f7;
+            background-color: #333;
+            border: 1px solid #f7f7f7;
+        }
+        .dark-mode li, .dark-mode #song,  .dark-mode #quotes{
+            background-color:#333;
+            border: 1px solid #f7f7f7;
+            color: aliceblue;
+        }
+        .dark-mode #todo{
+            color: aliceblue;
+        }
     </style>
     
 </head>
 <body>
-    <h1>📝 Yino's To do List </h1>>
+    <h1>📝 Yino's To do List </h1>
+    <div id="currentTime">Current time...</div>
+    <div id="song">🎵 Today's lucky song： loading...</div>
+    <div id="quotes">📜 Today's quote： loading...</div>
+    <button id="toggle-theme">🌓 Shift theme</button>
     <input type="text" id="input" placeholder="Enter a task...">
-    <button type="button" id="addbtn">Add</button>
+    <button type="Button" id="addbtn">Add</button>
     <ul id="todo"></ul>
     <script>
         //add a todo list
         const input = document.getElementById("input");
         const addBtn = document.getElementById("addbtn");
         const todo = document.getElementById("todo");
+        const toggleBtn = document.getElementById("toggle-theme");
+        const songBox = document.getElementById("song");
+        const quoteBox = document.getElementById("quotes");
+        const timenow = document.getElementById("currentTime");
+
+        const luckSong = [
+            "Taylor Swift - Enchanted",
+            "Jay Chou - Sunny Day",
+            "IU - Palette",
+            "Coldplay - Viva La Vida",
+            "Adele - Easy On Me",
+            "YOASOBI - 夜に駆ける",
+            "NewJeans - OMG",
+            "周杰伦 - 青花瓷",
+            "Billie Eilish - Ocean Eyes",
+            "BTS - Spring Day"
+        ];
+
 
         //get tasks array in localStorage 
         //tasks format: tasks[ [text:abc, completed: true or flase] , [], [],...]
@@ -132,7 +191,12 @@
                     saveTasks();
                     renderTasks();
                 }); 
-                
+
+                //show timestamp
+                const time = document.createElement("p");
+                time.className = "time";
+                time.textContent = `🕒 创建时间：${task.time}`;
+          
                 //let button stay right...
                 const btnGroup = document.createElement("div");
                 btnGroup.classList.add("btngroup");
@@ -144,6 +208,7 @@
 
                 //add to list
                 list.appendChild(taskContext);
+                list.appendChild(time);  
                 list.appendChild(btnGroup);
 
                 todo.appendChild(list);
@@ -154,6 +219,36 @@
             localStorage.setItem("tasks", JSON.stringify(tasks)); //parse to string type
         }
 
+
+        //luckSong for everyday
+         function getLuckSong(){
+             const date = new Date();
+               return date.getDate() % luckSong.length;
+         }
+         const todaySong = luckSong[getLuckSong()];
+         songBox.textContent = "🎵 今日幸运歌曲：" + todaySong;
+
+         //get english quotes everyday
+         /*
+            Why fetch(...) Instead of writing it inside the function, you just write it outside?
+            That is, written on the outside to:
+                Daily English quotes are automatically retrieved and displayed when the page loads.
+            */
+        fetch("https://zenquotes.io/api/random")
+        .then(res => res.json())
+        .then(data => {
+            quoteBox.innerHTML = `📜 "${data.content}"<br>— ${data.author}`;
+        })
+        .catch(err => {
+        quoteBox.textContent = "⚠️ 名言获取失败：" + err;
+        });
+
+        //show time
+        setInterval(() => {
+            const time = new Date();
+            timenow.textContent = "🕒 当前时间：" + time.toLocaleString();
+        }, 1000);
+         
         //add todo
         addBtn.addEventListener("click", function(){
             const task = input.value.trim();
@@ -162,20 +257,28 @@
                 return;
             }
 
-            tasks.push({text: task, completed: false});
+            tasks.push({text: task, 
+                        completed: false,
+                        time: new Date().toLocaleString()}); // 当前时间转成字符串
             saveTasks();
             renderTasks();
 
             input.value = "";
         });
+
+        //add dark mode
+        toggleBtn.onclick = () => {
+            document.body.classList.toggle("dark-mode");
+        };
+
+
         //初始化渲染
         renderTasks();
 
         //deadline
         //list sort
-        //dark mode
         //clearAll done task
-        //add weather components......
+        //add weather components......git
     </script>
     
 </body>
